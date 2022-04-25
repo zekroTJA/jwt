@@ -21,8 +21,8 @@ type IAlgorithm interface {
 }
 
 type Algorithm struct {
-	name   string
-	hasher hash.Hash
+	name       string
+	hasherPool devicePool[hash.Hash]
 }
 
 func (t Algorithm) Name() string {
@@ -30,15 +30,15 @@ func (t Algorithm) Name() string {
 }
 
 func (t Algorithm) Sum(data []byte) ([]byte, error) {
-	_, err := t.hasher.Write([]byte(data))
+	hasher := t.hasherPool.Get()
+	defer t.hasherPool.Put(hasher)
+
+	_, err := hasher.Write([]byte(data))
 	if err != nil {
 		return nil, err
 	}
 
-	sum := t.hasher.Sum(nil)
-	t.hasher.Reset()
-
-	return sum, nil
+	return hasher.Sum(nil), nil
 }
 
 // NewAlgorithmWithKey returns a new algorithm using the
@@ -46,8 +46,15 @@ func (t Algorithm) Sum(data []byte) ([]byte, error) {
 // a key used to sign the hash with.
 func NewAlgorithmWithKey(name string, hasher func() hash.Hash, key []byte) Algorithm {
 	return Algorithm{
-		name:   name,
-		hasher: hmac.New(hasher, key),
+		name: name,
+		hasherPool: newPool(
+			func() hash.Hash {
+				return hmac.New(hasher, key)
+			},
+			func(t hash.Hash) {
+				t.Reset()
+			},
+		),
 	}
 }
 
