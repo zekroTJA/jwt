@@ -5,6 +5,8 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"hash"
+
+	"golang.org/x/crypto/sha3"
 )
 
 // IAlgorithm describes a hash algorithm used to
@@ -57,4 +59,8 @@ func NewHmacSha256(key []byte) Algorithm {
 // NewHmacSha512 returns a new algorithm using HS512.
 func NewHmacSha512(key []byte) Algorithm {
 	return NewAlgorithmWithKey("HS512", sha512.New, key)
+}
+
+func NewHmacSha384(key []byte) Algorithm {
+	return NewAlgorithmWithKey("HS384", sha3.New384, key)
 }
