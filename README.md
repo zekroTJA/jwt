@@ -34,4 +34,4 @@ if err != nil {
 log.Printf("Recovered claims: %+v", recoveredClaims)
 ```
 
-Go to [examples](examples) to see the full example.
+Go to [example](example) to see the full example.
