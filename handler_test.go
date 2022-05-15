@@ -1,6 +1,7 @@
 package jwt
 
 import (
+	"sync"
 	"testing"
 	"time"
 )
@@ -131,4 +132,23 @@ func TestDecodeAndValidate_ExpNbf(t *testing.T) {
 	if err != ErrTokenExpired {
 		t.Fatal("invalid token was incorrectly validated against EXP")
 	}
+}
+
+func TestTestEncodeAndSign_RaceCondition(t *testing.T) {
+	alg := NewHandler[PublicClaims](NewHmacSha256([]byte(testKey)))
+
+	n := 100
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func() {
+			alg.EncodeAndSign(PublicClaims{
+				Iss: "test",
+				Sub: "test",
+			})
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
 }
